@@ -1,0 +1,47 @@
+{
+  "name": "next-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --watch",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "dependencies": {
+    "@emotion/babel-preset-css-prop": "^10.0.27",
+    "@emotion/core": "10.0.27",
+    "@emotion/styled": "10.0.27",
+    "antd": "^4.6.6",
+    "date-fns": "^2.16.1",
+    "emotion": "10.0.27",
+    "emotion-server": "10.0.27",
+    "faunadb": "^3.0.1",
+    "framer-motion": "^2.7.7",
+    "lowdb": "^1.0.0",
+    "next": "9.5.3",
+    "node-fetch": "^2.6.1",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "shortid": "^2.2.15",
+    "swr": "^0.3.5",
+    "typeface-inter": "^3.15.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@storybook/addon-actions": "^6.0.21",
+    "@storybook/addon-essentials": "^6.0.21",
+    "@storybook/addon-links": "^6.0.21",
+    "@storybook/react": "^6.0.21",
+    "@testing-library/dom": "^7.24.3",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.0.4",
+    "babel-jest": "^26.3.0",
+    "babel-loader": "^8.1.0",
+    "jest": "^26.4.2",
+    "jest-dom": "^4.0.0",
+    "react-is": "^16.13.1"
+  }
+}
