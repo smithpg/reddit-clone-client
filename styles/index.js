@@ -1,4 +1,12 @@
-import { keyframes, css, Global } from '@emotion/core';
+import { css, Global } from '@emotion/core';
+
+export const theme = {
+  colors: {
+    brand: '#7492cc',
+    accent: '#ebbc3d',
+  },
+  contentColumnWidth: 800,
+};
 
 export const globalStyles = (
   <Global
@@ -11,8 +19,20 @@ export const globalStyles = (
       body {
         padding: 0;
         margin: 0;
-        min-height: 100%;
-        font-family: 'Inter', Helvetica, Arial, sans-serif;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5 {
+        margin: 0px;
       }
     `}
   />
