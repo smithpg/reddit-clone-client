@@ -1,3 +1,4 @@
+import React from 'react';
 import { css, Global } from '@emotion/core';
 
 export const theme = {
@@ -5,7 +6,7 @@ export const theme = {
     brand: '#7492cc',
     accent: '#ebbc3d',
   },
-  contentColumnWidth: 800,
+  contentColumnWidth: 900,
 };
 
 export const globalStyles = (
