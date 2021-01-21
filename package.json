@@ -21,6 +21,7 @@
     "emotion-server": "10.0.27",
     "faunadb": "^3.0.1",
     "framer-motion": "^2.7.7",
+    "jwt-decode": "^3.1.2",
     "lowdb": "^1.0.0",
     "next": "9.5.3",
     "node-fetch": "^2.6.1",

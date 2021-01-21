@@ -6,9 +6,6 @@ import { useTheme } from '@emotion/react';
 import { useScrollPosition, useScreenWidth } from '../../hooks';
 
 /* Component definition */
-
-const navbarHeight = 84;
-
 const layoutContainerStyle = css`
   display: flex;
   flex-direction: column;
@@ -72,18 +69,17 @@ Layout.Navbar = ({ children, logo, ...props }) => {
     <nav
       {...props}
       css={css`
-        background: ${theme.colors.brand};
-        color: white;
+        background: white;
         transition: all 200;
-        ${documentHasScrolled
-          ? `
         position: fixed;
         top: 0px;
         left: 0px;
         right: 0px;
-        box-shadow: 0px 0px 10px -5px rgba(0,0,0,0.1);
+        z-index: 999;
+        ${documentHasScrolled &&
         `
-          : `position: static`};
+        box-shadow: 0px 0px 10px -5px rgba(0,0,0,0.1);
+        `};
       `}
     >
       <div
@@ -93,7 +89,7 @@ Layout.Navbar = ({ children, logo, ...props }) => {
           justify-content: space-between;
           max-width: ${theme.contentColumnWidth}px;
           margin: 0px auto;
-          height: ${navbarHeight}px;
+          height: ${theme.navbarHeight}px;
           padding: 12px 18px;
         `}
       >
@@ -105,22 +101,17 @@ Layout.Navbar = ({ children, logo, ...props }) => {
 };
 
 Layout.Content = ({ children }) => {
-  const scrollY = useScrollPosition();
-  const documentHasScrolled = scrollY !== 0;
+  // const scrollY = useScrollPosition();
+  // const documentHasScrolled = scrollY !== 0;
+
+  const theme: Record<string, any> = useTheme();
 
   return (
     <div
       css={css`
         flex-grow: 1;
         padding: 12px 0px;
-        ${documentHasScrolled && `padding-top: ${12 + navbarHeight}px;`}
-
-        h1 {
-          margin-bottom: 1em;
-        }
-        p {
-          margin-bottom: 0.5em;
-        }
+        padding-top: ${12 + theme.navbarHeight}px;
       `}
     >
       {children}

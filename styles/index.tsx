@@ -7,6 +7,7 @@ export const theme = {
     accent: '#ebbc3d',
   },
   contentColumnWidth: 900,
+  navbarHeight: 84,
 };
 
 export const globalStyles = (

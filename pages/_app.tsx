@@ -4,22 +4,27 @@ import { SWRConfig } from 'swr';
 import { CacheProvider } from '@emotion/core';
 import { ThemeProvider } from '@emotion/react';
 import { cache } from 'emotion';
+
+import { AuthProvider } from '../store';
+import { request } from '../utils';
 import { globalStyles, theme } from '../styles/index';
 
 const App: React.FC<AppProps> = ({ Component, pageProps }) => {
   return (
     <SWRConfig // Provides a global config for useSWR calls
       value={{
-        fetcher: (resource, init) =>
-          fetch(resource, init).then((res) => res.json()),
+        fetcher: request,
+        // fetcher: (resource, init) => console.log(resource, init),
       }}
     >
-      <ThemeProvider theme={theme}>
-        <CacheProvider value={cache}>
-          {globalStyles}
-          <Component {...pageProps} />
-        </CacheProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider theme={theme}>
+          <CacheProvider value={cache}>
+            {globalStyles}
+            <Component {...pageProps} />
+          </CacheProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </SWRConfig>
   );
 };

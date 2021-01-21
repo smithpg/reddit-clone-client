@@ -1,8 +1,16 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { css } from '@emotion/core';
+import useSWR from 'swr';
+
+import { useAuth } from '../store';
 import Layout from '../components/Layout/Layout';
 
 export default function Home(): React.ReactNode {
+  const { data, error } = useSWR('post');
+  const { user } = useAuth();
+
   return (
     <div>
       <Head>
@@ -10,25 +18,17 @@ export default function Home(): React.ReactNode {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        <Layout.Navbar logo={<h1>Puku Pals</h1>}>navbar</Layout.Navbar>
+        <Layout.Navbar logo={<h1>Legenda</h1>}>
+          <Link href="/new">
+            <a>+ Create a Post</a>
+          </Link>
+        </Layout.Navbar>
         <Layout.Content>
-          <Layout.Block
-            css={css`
-              background-color: red;
-            `}
-          >
-            <h1>
-              Feeling as though you have no reason to go on?
-              <em>You’re not alone.</em>
-            </h1>
-            <p>
-              PukkuPals provides a community where users can feel invited not
-              only to leave this world behind, but to have their final wishes
-              accommodated. The platform is designed to allow for both Japanese
-              and non-Japanese speakers to find these contractors, who are paid
-              commissions based on securing the job.
-            </p>
-          </Layout.Block>
+          {data ? (
+            data.map((post) => <Post key={post._id} post={post} />)
+          ) : (
+            <Layout.Block>Loading...</Layout.Block>
+          )}
         </Layout.Content>
         <Layout.Footer>
           <a
@@ -43,3 +43,37 @@ export default function Home(): React.ReactNode {
     </div>
   );
 }
+
+type User = { name: string };
+type Post = { title: string; text: string; _id: string; user: User };
+
+interface PostProps {
+  post: Post;
+}
+
+const Post: React.FC<PostProps> = ({ post }) => {
+  const router = useRouter();
+
+  return (
+    <Layout.Block
+      css={css`
+        margin-bottom: 1rem;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        padding: 12px 18px;
+        box-shadow: 1px 1px 10px -5px rgba(0, 0, 0, 0.1);
+      `}
+      onClick={() => router.push(`/post/${post._id}`)}
+    >
+      <div
+        css={css`
+          display: flex;
+          justify-content: space-between;
+        `}
+      >
+        <h3>{post.title}</h3>
+        <span>{post.user.username}</span>
+      </div>
+    </Layout.Block>
+  );
+};
