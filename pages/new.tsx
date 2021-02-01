@@ -4,15 +4,15 @@ import { Form, Input, Button } from 'antd';
 import useSWR, { mutate } from 'swr';
 
 import { request } from '../utils';
-import { useAuth } from '../store';
-import Layout from '../components/Layout/Layout';
+import { useGlobal } from '../store';
+import Layout from '../components/Layout';
 
 const validateMessages = {
   required: '${label} is required!',
 };
 
 const NewPostView = () => {
-  const { user, token } = useAuth();
+  const { user, token } = useGlobal();
   const router = useRouter();
 
   const onFinish = async (values: any) => {

@@ -4,4 +4,4 @@ export { default as useLocalMouseEvents } from './useLocalMouseEvents';
 export { default as useOnClickOutside } from './useOnClickOutside';
 export { default as useOnMount } from './useOnMount';
 export { default as useScrollPosition } from './useScrollPosition';
-export { default as useScreenWidth } from './useScreenWidth';
+export { default as useWindowSize } from './useWindowSize';

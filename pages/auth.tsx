@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { css } from '@emotion/core';
 import { Form, Input, Button } from 'antd';
 
-import { AuthContext } from '../store/index';
+import { useGlobal } from '../store/index';
 import request from '../utils/API';
-import Layout from '../components/Layout/Layout';
+import Layout from '../components/Layout';
 
 const layout = {
   labelCol: { span: 8 },
@@ -21,18 +21,19 @@ const [LOGIN, SIGNUP] = [0, 1];
 
 const AuthView = () => {
   const router = useRouter();
-  const authCtx = React.useContext(AuthContext);
+  const authCtx = useGlobal();
   const [mode, setMode] = React.useState(LOGIN);
 
   const onFinish = async (values: any) => {
-    const endpoint = mode === LOGIN ? 'auth/login' : 'auth/signup';
-    const body = { ...values };
-    delete body['confirm'];
+    const details = { ...values };
+    delete details['confirm'];
 
-    const res = await request(endpoint, { body });
+    if (mode === LOGIN) {
+      await authCtx.login(details);
+    } else {
+      await authCtx.signup(details);
+    }
 
-    authCtx.login({ username: res.username, token: res.token });
-    console.log(res);
     console.log(`Redirecting to ${router.query.redirect}`);
 
     router.push(router.query.redirect || '/');

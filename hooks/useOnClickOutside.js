@@ -1,35 +1,38 @@
 import React, { useEffect, useRef } from 'react';
 
 export default function useOnClickOutside(cb) {
-    const ref = useRef([]);
+  const ref = useRef([]);
 
-    const register = (element) => {
-        ref.current.push(element);
+  const register = (element) => {
+    ref.current = element;
+  };
+
+  useEffect(() => {
+    // Bind the event listener
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      // Unbind the event listener on clean up
+      document.removeEventListener('mousedown', onClick);
     };
+  }, []);
 
-    useEffect(() => {
-        // Bind the event listener
-        document.addEventListener('mousedown', onClick);
-        return () => {
-            // Unbind the event listener on clean up
-            document.removeEventListener('mousedown', onClick);
-        };
-    }, []);
+  return register;
 
-    return register;
+  /* Helper functions */
 
-    /* Helper functions */
+  function clickWasInside(event) {
+    console.log(event.target);
+    console.log(ref.current);
 
-    function clickWasOutside(event) {
-        // Return true if any of the registered elements
-        // contain the target of passed event
-        return ref.current.some((registeredElement) =>
-            registeredElement.contains(event.target)
-        );
+    console.log(ref.current.contains(event.target));
+    console.log(ref.current && ref.current.contains(event.target));
+
+    return ref.current && ref.current.contains(event.target);
+  }
+  function onClick(event) {
+    if (!clickWasInside(event)) {
+      console.log('closing');
+      cb();
     }
-    function onClick(event) {
-        if (clickWasOutside(event)) {
-            cb();
-        }
-    }
+  }
 }

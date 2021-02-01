@@ -5,7 +5,7 @@ import { CacheProvider } from '@emotion/core';
 import { ThemeProvider } from '@emotion/react';
 import { cache } from 'emotion';
 
-import { AuthProvider } from '../store';
+import { GlobalProvider } from '../store';
 import { request } from '../utils';
 import { globalStyles, theme } from '../styles/index';
 
@@ -17,14 +17,14 @@ const App: React.FC<AppProps> = ({ Component, pageProps }) => {
         // fetcher: (resource, init) => console.log(resource, init),
       }}
     >
-      <AuthProvider>
+      <GlobalProvider>
         <ThemeProvider theme={theme}>
           <CacheProvider value={cache}>
             {globalStyles}
             <Component {...pageProps} />
           </CacheProvider>
         </ThemeProvider>
-      </AuthProvider>
+      </GlobalProvider>
     </SWRConfig>
   );
 };

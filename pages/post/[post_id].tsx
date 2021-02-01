@@ -7,115 +7,57 @@ import { Form, Input, Button, Typography } from 'antd';
 import useSWR, { mutate } from 'swr';
 
 import { User, Post, Comment } from '../../types/entities';
-import { useScreenWidth } from '../../hooks';
-import { useAuth } from '../../store';
-import Layout from '../../components/Layout/Layout';
+import { useWindowSize } from '../../hooks';
+import { useGlobal, usePost } from '../../store';
+import Layout from '../../components/Layout';
+import Navbar from '../../components/Navbar';
 import DateTime from '../../components/DateTime';
+import CommentContainer from '../../components/CommentContainer';
+import VoteButtons from '../../components/VoteButtons';
+import UserLink from '../../components/UserLink';
+import CommentForm from '../../components/CommentForm';
+import IndentBox from '../../components/IndentBox';
 import { request } from '../../utils';
-
-const CommentContext = React.createContext(null);
-
-interface CommentFormProps {
-  parent_id?: string;
-  showCancelButton?: boolean;
-}
-const CommentForm: React.FC<CommentFormProps> = ({
-  parent_id,
-  showCancelButton = true,
-  ...props
-}) => {
-  const { submitComment, cancelComment } = React.useContext(CommentContext);
-
-  return (
-    <Form
-      onFinish={(values) => submitComment(values.text, parent_id)}
-      {...props}
-    >
-      <Form.Item name="text">
-        <Input.TextArea />
-      </Form.Item>
-      <Button htmlType="submit">Submit</Button>
-      {showCancelButton && (
-        <Button onClick={() => cancelComment(parent_id)}>Cancel</Button>
-      )}
-    </Form>
-  );
-};
-
-interface CommentContainerProps {
-  indent?: boolean;
-  comment: Comment;
-}
-const CommentContainer: React.FC<CommentContainerProps> = ({
-  indent = false,
-  comment,
-}) => {
-  const { isReplying, triggerComment } = React.useContext(CommentContext);
-
-  return (
-    <div
-      css={css`
-        margin-left: ${indent ? 1 : 0}rem;
-        padding: 6px;
-        padding-bottom: 12px;
-        border-left: 1px solid rgba(0, 0, 0, 0.2);
-      `}
-    >
-      <div>
-        <strong>{comment.user.username}</strong>
-        <DateTime
-          ISOString={comment.createdAt}
-          css={css`
-            margin-left: 6px;
-            color: rgba(0, 0, 0, 0.5);
-          `}
-        />
-      </div>
-      <div>{comment.text}</div>
-      {isReplying(comment._id) ? (
-        <>
-          <CommentForm
-            parent_id={comment._id}
-            css={css`
-              margin-left: 1rem;
-              padding: 6px;
-              padding-bottom: 12px;
-            `}
-          />
-        </>
-      ) : (
-        <div
-          css={css`
-            margin: 6px 0px;
-          `}
-          onClick={() => triggerComment(comment._id)}
-        >
-          Reply
-        </div>
-      )}
-      {comment.children.map((c) => (
-        <CommentContainer key={c._id} indent comment={c} />
-      ))}
-    </div>
-  );
-};
-
-interface UserLinkProps {
-  username: string;
-  id: string;
-}
-const UserLink: React.FC<UserLinkProps> = (props) => (
-  <Link href={`/user/${props.id}`}>{props.username}</Link>
-);
 
 const PostView: React.FC = () => {
   const router = useRouter();
-  const { post_id } = router.query;
-  const { user } = useAuth();
+  const post_id: string = router.query.post_id;
+  const {
+    user,
+    votes,
+    vote,
+    undoVote,
+    posts,
+    comments,
+    populateComments,
+    loadPostById,
+    createComment,
+    updateComment,
+    deleteComment,
+  } = useGlobal();
   const { navbarHeight } = useTheme();
-  const screenWidth = useScreenWidth();
-  const { data, error } = useSWR(`post/${post_id}`);
+  const { width: screenWidth } = useWindowSize();
   const [activeComments, setActiveComments] = React.useState({});
+
+  React.useEffect(() => {
+    if (post_id) {
+      loadPostById(post_id);
+    }
+  }, [post_id]);
+
+  const post = posts && posts[post_id];
+
+  const commentTree = React.useMemo(() => {
+    // if the post and its comments have been
+    // loaded
+    if (post && comments && comments[post.comments[0]]) {
+      const populated = populateComments(comments);
+
+      return post.comments
+        .map((id) => populated[id])
+        .filter((c) => c && !c.parent);
+    } else return [];
+  }, [comments, posts]);
 
   const triggerAuth = () => {
     router.push(`/auth?redirect=${router.asPath}`);
@@ -130,68 +72,96 @@ const PostView: React.FC = () => {
     }
   };
 
-  const isReplying = (comment_id: string) => activeComments[comment_id];
+  const getIsReplying = (comment_id: string) => activeComments[comment_id];
 
   const cancelComment = (parent_id?: string) => {
     setActiveComments((r) => ({ ...r, [parent_id || 'ROOT']: false }));
   };
 
   const submitComment = async (text: string, parent_id?: string) => {
-    const body = {
-      text,
-      post: router.query.post_id,
-    };
-    if (parent_id) {
-      body.parent = parent_id;
-    }
-
-    await request('comment', {
-      body,
-    });
-
+    await createComment({ text, parent: parent_id, post: post_id });
     setActiveComments((r) => ({ ...r, [parent_id || 'ROOT']: false }));
-
-    mutate(`post/${router.query.post_id}`);
   };
 
-  const ctx = {
-    submitComment,
-    triggerComment,
-    cancelComment,
-    isReplying,
-  };
-
-  const commentsById = React.useMemo(
-    () =>
-      data?.comments.reduce((acc, c) => {
-        acc[c._id] = c;
-        return acc;
-      }, {}),
-    [data]
-  );
-
-  const populateChildren = (comment) => {
-    if (comment.children.length > 0) {
-      comment.children = comment.children.map((c_id) =>
-        populateChildren(commentsById[c_id])
-      );
-    }
-
-    return comment;
-  };
-
-  const commentTree = React.useMemo(() => {
-    return data?.comments
-      .filter((c) => c && !c.parent)
-      .sort((c1, c2) => Date.parse(c1.createdAt) < Date.parse(c2.createdAt))
-      .map(populateChildren);
-  }, [data]);
-
-  const renderComments = (comments) => {
+  const renderCommentTree = () => {
     try {
-      return commentTree.map((c) => (
-        <CommentContainer key={c._id} comment={c} />
-      ));
+      const elements = [];
+
+      const renderComment = (c, indent = 0) => {
+        const voteProps = {
+          userVote: votes.comments[c._id] || 0,
+          onClickUpVote:
+            votes.comments[c._id] === 1
+              ? (id: string) => undoVote({ comment: id })
+              : (id: string) => vote({ comment: id, isUpvote: true }),
+          onClickDownVote:
+            votes.comments[c._id] === -1
+              ? (id: string) => undoVote({ comment: id })
+              : (id: string) => vote({ comment: id, isUpvote: false }),
+        };
+
+        if (indent > 0) {
+          elements.push(
+            <IndentBox level={indent} borderColor={'#333'}>
+              <CommentContainer
+                key={c._id}
+                comment={c}
+                triggerReply={triggerComment}
+                isReplying={getIsReplying(c._id)}
+                onEditFinish={updateComment}
+                onClickDelete={deleteComment}
+                ownedByUser={user && c.user._id === user._id}
+                {...voteProps}
+              />
+            </IndentBox>
+          );
+        } else {
+          elements.push(
+            <CommentContainer
+              key={c._id}
+              comment={c}
+              triggerReply={triggerComment}
+              isReplying={getIsReplying(c._id)}
+              onEditFinish={updateComment}
+              onClickDelete={deleteComment}
+              ownedByUser={user && c.user._id === user._id}
+              indent={indent}
+              {...voteProps}
+            />
+          );
+        }
+
+        if (getIsReplying(c._id)) {
+          elements.push(
+            <div
+              css={css`
+                margin-left: ${indent}rem;
+                padding: 4px 8px;
+                box-shadow: 0 0 10px -5px rgba(0, 0, 0, 0.3);
+              `}
+            >
+              <h3>Replying to {comments[c._id].user.username}</h3>
+              <CommentForm
+                key={`${c._id}_reply`}
+                parent_id={c._id}
+                submitComment={submitComment}
+                cancelComment={cancelComment}
+              />
+            </div>
+          );
+        }
+
+        if (c.children.length > 0) {
+          c.children.forEach((child) => renderComment(child, indent + 1));
+        }
+      };
+
+      commentTree.forEach((c) => renderComment(c));
+
+      console.log(commentTree);
+      console.log(elements);
+
+      return elements;
     } catch (err) {
       console.log(err);
       console.log(comments.filter((c) => !c.parent));
@@ -200,61 +170,72 @@ const PostView: React.FC = () => {
 
   return (
     <Layout>
-      <Layout.Navbar
-        logo={
-          <Link href="/">
-            <h1>Legenda</h1>
-          </Link>
-        }
-      />
+      <Navbar />
       <Layout.Content>
-        {data ? (
+        {post ? (
           <>
             <Layout.Block
               css={css`
                 position: sticky;
-                z-index: 999;
+                z-index: 2;
                 top: ${navbarHeight}px;
                 background: white;
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
-
-                @media (max-width: 450px) {
-                  flex-direction: column;
-                  align-items: flex-start;
-                }
               `}
             >
-              <Typography.Title
-                level={screenWidth > 500 ? 2 : 4}
+              <VoteButtons
+                onClickUpVote={
+                  votes.posts[post_id] === 1
+                    ? () => undoVote({ post: post_id })
+                    : () => vote({ post: post_id, isUpvote: true })
+                }
+                onClickDownVote={
+                  votes.posts[post_id] === -1
+                    ? () => undoVote({ post: post_id })
+                    : () => vote({ post: post_id, isUpvote: false })
+                }
+                userVote={votes.posts[post._id]}
+                value={post.points}
+              />
+              <div
                 css={css`
-                  margin: 0px !important;
+                  margin-left: 12px;
                 `}
               >
-                {data.title}{' '}
-              </Typography.Title>
-              <UserLink username={data.user.username} id={data.user._id} />
+                <Typography.Title
+                  level={screenWidth > 500 ? 2 : 4}
+                  css={css`
+                    margin: 0px !important;
+                    flex-grow: 1;
+                  `}
+                >
+                  {post.title}{' '}
+                </Typography.Title>
+                <UserLink user={post.user} />
+              </div>
             </Layout.Block>
-            <Layout.Block>{data.text}</Layout.Block>
-            <CommentContext.Provider value={ctx}>
-              <Layout.Block
-                css={css`
-                  margin-top: 12px;
-                  margin-bottom: 12px;
-                `}
-              >
-                {user ? (
-                  <>
-                    <h3>Leave a Comment as {user}</h3>
-                    <CommentForm showCancelButton={false} />
-                  </>
-                ) : (
-                  <Button onClick={triggerAuth}>Login to Comment</Button>
-                )}
-              </Layout.Block>
-              <Layout.Block>{renderComments(data.comments)}</Layout.Block>
-            </CommentContext.Provider>
+            <Layout.Block>{post.text}</Layout.Block>
+            <Layout.Block
+              css={css`
+                margin-top: 12px;
+                margin-bottom: 12px;
+              `}
+            >
+              {user ? (
+                <>
+                  <h3>Leave a Comment as {user.username}</h3>
+                  <CommentForm
+                    submitComment={submitComment}
+                    cancelComment={cancelComment}
+                    showCancelButton={false}
+                  />
+                </>
+              ) : (
+                <Button onClick={triggerAuth}>Login to Comment</Button>
+              )}
+            </Layout.Block>
+            <Layout.Block>{renderCommentTree()}</Layout.Block>
           </>
         ) : (
           <Layout.Block>Loading...</Layout.Block>

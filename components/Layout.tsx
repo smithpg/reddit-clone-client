@@ -3,7 +3,7 @@ import { css } from '@emotion/core';
 import { useTheme } from '@emotion/react';
 
 /* Component-specific imports */
-import { useScrollPosition, useScreenWidth } from '../../hooks';
+import { useScrollPosition, useWindowSize } from '../hooks';
 
 /* Component definition */
 const layoutContainerStyle = css`
@@ -58,8 +58,6 @@ Layout.Block = ({ children, ...props }) => {
 };
 
 Layout.Navbar = ({ children, logo, ...props }) => {
-  const screenWidth = useScreenWidth();
-
   const scrollY = useScrollPosition();
   const documentHasScrolled = scrollY !== 0;
 
@@ -75,7 +73,7 @@ Layout.Navbar = ({ children, logo, ...props }) => {
         top: 0px;
         left: 0px;
         right: 0px;
-        z-index: 999;
+        z-index: 998;
         ${documentHasScrolled &&
         `
         box-shadow: 0px 0px 10px -5px rgba(0,0,0,0.1);

@@ -6,10 +6,10 @@ type RequestOptions = {
   queryParams?: Record<string, string>;
 };
 
-export default async function request(
+export default async function request<T>(
   endpoint: string,
   options?: RequestOptions
-): Promise<Record<string, unknown>> {
+): Promise<T> {
   const headers: Record<string, string> = {
     'content-type': 'application/json',
   };
@@ -43,21 +43,21 @@ export default async function request(
 
   // Perform the fetch, parsing any JSON in the response
   return window.fetch(URL, config).then(async (response) => {
-    if (response.status === 401) {
-      // If the user's token was invalid
-      // clearLocalAuthToken();
+    // if (response.status === 401) {
+    // If the user's token was invalid
+    // clearLocalAuthToken();
 
-      // Refresh the page, to force reauthentication
-      // window.location.assign(window.location);
-      return;
-    }
+    // Refresh the page, to force reauthentication
+    // window.location.assign(window.location);
+    //   return;
+    // }
 
     // Extract data from the response
     const contentType = response.headers.get('Content-Type');
     let data;
-    if (contentType.includes('application/json')) {
+    if (contentType && contentType.includes('application/json')) {
       data = await response.json();
-    } else if (contentType.includes('text')) {
+    } else if (contentType && contentType.includes('text')) {
       data = await response.text();
     }
 
