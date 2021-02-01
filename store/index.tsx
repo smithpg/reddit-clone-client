@@ -47,9 +47,6 @@ const initialValues = {
 
 export const GlobalProvider: React.FC = (props) => {
   const [user, setUser] = React.useState(null);
-  const [users, setUsers] = React.useState({});
-  const [posts, setPosts] = React.useState({});
-  const [comments, setComments] = React.useState({});
   const [votes, setVotes] = React.useState(initialValues.votes);
 
   // When the app first mounts, check for a token ...
@@ -125,29 +122,24 @@ export const GlobalProvider: React.FC = (props) => {
 
     const indexed = indexById(posts);
 
-    setPosts(indexed);
+    return indexed;
   }
 
   async function loadUserDetails(id: string) {
     const res = await request<User>(`user/${id}`);
-
-    const newPosts = produce(posts, (posts) =>
-      Object.assign(posts, indexById(res.posts))
-    );
-    const newComments = produce(comments, (comments) => {
-      res.comments.forEach(
-        (c) => (c.user = { username: res.username, _id: id })
-      );
-      return Object.assign(comments, indexById(res.comments));
+    const populateUserField = (entity) => ({
+      ...entity,
+      user: {
+        username: res.username,
+        _id: id,
+      },
     });
 
-    console.log(newComments);
-
-    const user = normalizeUser(res);
-
-    setPosts(newPosts);
-    setComments(newComments);
-    setUsers((u) => ({ ...u, [id]: user }));
+    return {
+      user: normalizeUser(res),
+      comments: indexById(res.comments.map(populateUserField)),
+      posts: indexById(res.posts.map(populateUserField)),
+    };
   }
 
   async function loadPostById(id: string) {
@@ -161,14 +153,14 @@ export const GlobalProvider: React.FC = (props) => {
       comments: Object.keys(indexedComments),
     };
 
-    setComments((c) => ({ ...c, ...indexedComments }));
-    setPosts((p) => ({ ...p, [id]: normalizedPost }));
+    return {
+      post: normalizedPost,
+      comments: indexedComments,
+    };
   }
 
-  async function loadCommentById(id: string) {
-    const comment = await request<Comment>(`comment/${id}`);
-
-    setComments((c) => ({ ...c, [id]: comment }));
+  function loadCommentById(id: string) {
+    return request<Comment>(`comment/${id}`);
   }
 
   async function createComment(options: {
@@ -181,19 +173,7 @@ export const GlobalProvider: React.FC = (props) => {
         body: options,
       });
 
-      const newPosts = produce(posts, (newPosts) => {
-        newPosts[options.post].comments.push(res._id);
-
-        return newPosts;
-      });
-
-      const newComments = produce(comments, (newComments) => {
-        newComments[res._id] = res;
-        return newComments;
-      });
-
-      setComments(newComments);
-      setPosts(newPosts);
+      return res;
     } catch (err) {
       console.log(err);
     }
@@ -208,36 +188,24 @@ export const GlobalProvider: React.FC = (props) => {
         },
       });
 
-      setComments((c) => ({ ...c, [comment_id]: res }));
+      return res;
     } catch (err) {
       console.log(err);
     }
   }
 
-  async function deleteComment(comment_id: string) {
+  function deleteComment(comment_id: string) {
     try {
-      const post = comments[comment_id].post;
-
-      await request(`comment/${comment_id}`, { method: 'delete' });
-
-      const newPost = produce(posts[post], (p) => {
-        p.comments = p.comments.filter((c) => c !== comment_id);
-        return p;
-      });
-
-      const newComments = produce(comments, (c) => {
-        delete c[comment_id];
-        return c;
-      });
-
-      setPosts((p) => ({ ...p, [post]: newPost }));
-      setComments(newComments);
+      return request(`comment/${comment_id}`, { method: 'delete' });
     } catch (error) {
       console.log(err);
     }
   }
 
-  async function undoVote(options: { comment?: string; post?: string }) {
+  async function undoVote(
+    options: { comment?: string; post?: string },
+    cb: (newPoints: number) => void
+  ) {
     if (options.comment) {
       const { points: newPoints } = await request('vote', {
         method: 'delete',
@@ -253,13 +221,7 @@ export const GlobalProvider: React.FC = (props) => {
         })
       );
 
-      setComments((c) => ({
-        ...c,
-        [id]: {
-          ...c[id],
-          points: newPoints,
-        },
-      }));
+      return cb(newPoints);
     } else {
       const { points: newPoints } = await request('vote', {
         method: 'delete',
@@ -274,21 +236,17 @@ export const GlobalProvider: React.FC = (props) => {
           return v;
         })
       );
-
-      setPosts((p) => ({
-        ...p,
-        [id]: {
-          ...p[id],
-          points: newPoints,
-        },
-      }));
+      return cb(newPoints);
     }
   }
-  async function vote(options: {
-    comment?: string;
-    post?: string;
-    isUpvote: boolean;
-  }) {
+  async function vote(
+    options: {
+      comment?: string;
+      post?: string;
+      isUpvote: boolean;
+    },
+    cb: (newPoints: number) => void
+  ) {
     try {
       const entity = options.comment ? 'comment' : 'post';
       const id = options.comment || options.post;
@@ -305,25 +263,9 @@ export const GlobalProvider: React.FC = (props) => {
         v[entity + 's'][id] = options.isUpvote ? 1 : -1;
       });
 
-      if (entity === 'post') {
-        setPosts((p) => ({
-          ...p,
-          [id]: {
-            ...p[id],
-            points: newPoints,
-          },
-        }));
-      } else {
-        setComments((c) => ({
-          ...c,
-          [id]: {
-            ...c[id],
-            points: newPoints,
-          },
-        }));
-      }
-
       setVotes(newVotes);
+
+      return cb(newPoints);
     } catch (error) {
       console.log(error);
     }
@@ -337,10 +279,6 @@ export const GlobalProvider: React.FC = (props) => {
     signup,
     logout,
 
-    // Data
-    users,
-    posts,
-    comments,
     populateComments: (comments) => {
       return produce(comments, (populated) => {
         // Populate children of comments

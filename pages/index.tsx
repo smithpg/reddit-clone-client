@@ -13,10 +13,13 @@ import PostContainer from '../components/PostContainer';
 import Layout from '../components/Layout';
 
 export default function Home(): React.ReactNode {
-  const { votes, vote, undoVote, loadPosts, posts } = useGlobal();
+  const { votes, vote, undoVote, loadPosts } = useGlobal();
+  const [posts, setPosts] = React.useState({});
 
   React.useEffect(() => {
-    loadPosts();
+    loadPosts().then((posts) => {
+      setPosts(posts);
+    });
   }, []);
 
   return (
@@ -29,8 +32,14 @@ export default function Home(): React.ReactNode {
         <Navbar />
         <Layout.Content>
           {posts ? (
-            Object.values(posts).map((post) => {
+            Object.values(posts).map((post: Post) => {
               const userVote = votes.posts[post._id] || 0;
+              const updatePostPoints = (newPoints) => {
+                setPosts((p) => ({
+                  ...p,
+                  [post._id]: { ...post, points: newPoints },
+                }));
+              };
 
               return (
                 <PostContainer
@@ -39,13 +48,15 @@ export default function Home(): React.ReactNode {
                   userVote={userVote}
                   onClickUpVote={
                     userVote === 1
-                      ? (id) => undoVote({ post: id })
-                      : (id) => vote({ post: id, isUpvote: true })
+                      ? (id) => undoVote({ post: id }, updatePostPoints)
+                      : (id) =>
+                          vote({ post: id, isUpvote: true }, updatePostPoints)
                   }
                   onClickDownVote={
                     userVote === -1
-                      ? (id) => undoVote({ post: id })
-                      : (id) => vote({ post: id, isUpvote: false })
+                      ? (id) => undoVote({ post: id }, updatePostPoints)
+                      : (id) =>
+                          vote({ post: id, isUpvote: false }, updatePostPoints)
                   }
                 />
               );

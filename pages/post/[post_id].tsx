@@ -27,8 +27,6 @@ const PostView: React.FC = () => {
     votes,
     vote,
     undoVote,
-    posts,
-    comments,
     populateComments,
     loadPostById,
     createComment,
@@ -37,15 +35,18 @@ const PostView: React.FC = () => {
   } = useGlobal();
   const { navbarHeight } = useTheme();
   const { width: screenWidth } = useWindowSize();
+  const [post, setPost] = React.useState(null);
+  const [comments, setComments] = React.useState({});
   const [activeComments, setActiveComments] = React.useState({});
 
   React.useEffect(() => {
     if (post_id) {
-      loadPostById(post_id);
+      loadPostById(post_id).then(({ post, comments }) => {
+        setPost(post);
+        setComments(comments);
+      });
     }
   }, [post_id]);
-
-  const post = posts && posts[post_id];
 
   const commentTree = React.useMemo(() => {
     // if the post and its comments have been
@@ -57,7 +58,7 @@ const PostView: React.FC = () => {
         .map((id) => populated[id])
         .filter((c) => c && !c.parent);
     } else return [];
-  }, [comments, posts]);
+  }, [comments, post]);
 
   const triggerAuth = () => {
     router.push(`/auth?redirect=${router.asPath}`);
@@ -79,8 +80,31 @@ const PostView: React.FC = () => {
   };
 
   const submitComment = async (text: string, parent_id?: string) => {
-    await createComment({ text, parent: parent_id, post: post_id });
+    const newComment = await createComment({
+      text,
+      parent: parent_id,
+      post: post_id,
+    });
+    setComments((c) => ({ ...c, [newComment._id]: newComment }));
     setActiveComments((r) => ({ ...r, [parent_id || 'ROOT']: false }));
+  };
+
+  const onDeleteComment = (id: string) => {
+    return deleteComment(id).then(() => {
+      const newComments = { ...comments };
+      delete newComments[id];
+      setComments(newComments);
+    });
+  };
+
+  const onUpdateComment = (id: string, newText: string) => {
+    return updateComment(id, newText).then((newComment) => {
+      setComments({ ...comments, [id]: newComment });
+    });
+  };
+
+  const updatePostPoints = (newPoints) => {
+    setPost({ ...post, points: newPoints });
   };
 
   const renderCommentTree = () => {
@@ -88,16 +112,21 @@ const PostView: React.FC = () => {
       const elements = [];
 
       const renderComment = (c, indent = 0) => {
+        const updateCommentPoints = (newPoints) => {
+          setComments({ ...comments, [c._id]: { ...c, points: newPoints } });
+        };
         const voteProps = {
           userVote: votes.comments[c._id] || 0,
           onClickUpVote:
             votes.comments[c._id] === 1
-              ? (id: string) => undoVote({ comment: id })
-              : (id: string) => vote({ comment: id, isUpvote: true }),
+              ? (id: string) => undoVote({ comment: id }, updateCommentPoints)
+              : (id: string) =>
+                  vote({ comment: id, isUpvote: true }, updateCommentPoints),
           onClickDownVote:
             votes.comments[c._id] === -1
-              ? (id: string) => undoVote({ comment: id })
-              : (id: string) => vote({ comment: id, isUpvote: false }),
+              ? (id: string) => undoVote({ comment: id }, updateCommentPoints)
+              : (id: string) =>
+                  vote({ comment: id, isUpvote: false }, updateCommentPoints),
         };
 
         if (indent > 0) {
@@ -108,8 +137,8 @@ const PostView: React.FC = () => {
                 comment={c}
                 triggerReply={triggerComment}
                 isReplying={getIsReplying(c._id)}
-                onEditFinish={updateComment}
-                onClickDelete={deleteComment}
+                onEditFinish={onUpdateComment}
+                onClickDelete={onDeleteComment}
                 ownedByUser={user && c.user._id === user._id}
                 {...voteProps}
               />
@@ -122,8 +151,8 @@ const PostView: React.FC = () => {
               comment={c}
               triggerReply={triggerComment}
               isReplying={getIsReplying(c._id)}
-              onEditFinish={updateComment}
-              onClickDelete={deleteComment}
+              onEditFinish={onUpdateComment}
+              onClickDelete={onDeleteComment}
               ownedByUser={user && c.user._id === user._id}
               indent={indent}
               {...voteProps}
@@ -187,13 +216,21 @@ const PostView: React.FC = () => {
               <VoteButtons
                 onClickUpVote={
                   votes.posts[post_id] === 1
-                    ? () => undoVote({ post: post_id })
-                    : () => vote({ post: post_id, isUpvote: true })
+                    ? () => undoVote({ post: post_id }, updatePostPoints)
+                    : () =>
+                        vote(
+                          { post: post_id, isUpvote: true },
+                          updatePostPoints
+                        )
                 }
                 onClickDownVote={
                   votes.posts[post_id] === -1
-                    ? () => undoVote({ post: post_id })
-                    : () => vote({ post: post_id, isUpvote: false })
+                    ? () => undoVote({ post: post_id }, updatePostPoints)
+                    : () =>
+                        vote(
+                          { post: post_id, isUpvote: false },
+                          updatePostPoints
+                        )
                 }
                 userVote={votes.posts[post._id]}
                 value={post.points}

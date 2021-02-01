@@ -6,6 +6,7 @@ import { Tabs } from 'antd';
 import useSWR from 'swr';
 
 import { useGlobal } from '../../store';
+import { Post, User, Comment } from '../../types/entities';
 import Layout from '../../components/Layout';
 import PostContainer from '../../components/PostContainer';
 import CommentContainer from '../../components/CommentContainer';
@@ -17,9 +18,6 @@ const UserView: React.FC = () => {
   const { user_id } = router.query;
   const {
     user,
-    users,
-    posts,
-    comments,
     loadUserDetails,
     votes,
     vote,
@@ -29,10 +27,16 @@ const UserView: React.FC = () => {
   } = useGlobal();
 
   React.useEffect(() => {
-    loadUserDetails(user_id);
+    loadUserDetails(user_id).then(({ user, posts, comments }) => {
+      setTargetUser(user);
+      setPosts(posts);
+      setComments(comments);
+    });
   }, [user_id]);
 
-  const targetUser = users && users[user_id];
+  const [targetUser, setTargetUser] = React.useState(null);
+  const [posts, setPosts] = React.useState({});
+  const [comments, setComments] = React.useState({});
 
   return (
     <Layout>
@@ -52,46 +56,70 @@ const UserView: React.FC = () => {
             <Layout.Block>
               <Tabs defaultActiveKey="1">
                 <TabPane tab="Posts" key="1">
-                  {targetUser.posts.map((post_id) => {
-                    const p = posts[post_id];
+                  {posts &&
+                    Object.values(posts).map((p: Post) => {
+                      const updatePostPoints = (newPoints) => {
+                        setPosts({
+                          ...posts,
+                          [p._id]: { ...p, points: newPoints },
+                        });
+                      };
 
-                    if (p === undefined) return 'Loading...';
+                      const voteProps = {
+                        userVote: votes.posts[p._id] || 0,
+                        onClickUpVote:
+                          votes.posts[p._id] === 1
+                            ? (id: string) =>
+                                undoVote({ post: id }, updatePostPoints)
+                            : (id: string) =>
+                                vote(
+                                  { post: id, isUpvote: true },
+                                  updatePostPoints
+                                ),
+                        onClickDownVote:
+                          votes.posts[p._id] === -1
+                            ? (id: string) =>
+                                undoVote({ post: id }, updatePostPoints)
+                            : (id: string) =>
+                                vote(
+                                  { post: id, isUpvote: false },
+                                  updatePostPoints
+                                ),
+                      };
 
-                    const voteProps = {
-                      userVote: votes.posts[p._id] || 0,
-                      onClickUpVote:
-                        votes.posts[p._id] === 1
-                          ? (id: string) => undoVote({ post: id })
-                          : (id: string) => vote({ post: id, isUpvote: true }),
-                      onClickDownVote:
-                        votes.posts[p._id] === -1
-                          ? (id: string) => undoVote({ post: id })
-                          : (id: string) => vote({ post: id, isUpvote: false }),
-                    };
-
-                    <PostContainer post={p} key={p._id} {...voteProps} />;
-                  })}
+                      return (
+                        <PostContainer post={p} key={p._id} {...voteProps} />
+                      );
+                    })}
                 </TabPane>
                 <TabPane tab="Comments" key="2">
-                  {targetUser.comments.map((comment_id) => {
-                    const c = comments[comment_id];
-
-                    if (c === undefined) {
-                      return 'Loading...';
-                    }
-
+                  {Object.values(comments).map((c: Comment) => {
+                    const updateCommentPoints = (newPoints) => {
+                      setComments({
+                        ...comments,
+                        [c._id]: { ...c, points: newPoints },
+                      });
+                    };
                     const voteProps = {
                       userVote: votes.comments[c._id] || 0,
                       onClickUpVote:
                         votes.comments[c._id] === 1
-                          ? (id: string) => undoVote({ comment: id })
+                          ? (id: string) =>
+                              undoVote({ comment: id }, updateCommentPoints)
                           : (id: string) =>
-                              vote({ comment: id, isUpvote: true }),
+                              vote(
+                                { comment: id, isUpvote: true },
+                                updateCommentPoints
+                              ),
                       onClickDownVote:
                         votes.comments[c._id] === -1
-                          ? (id: string) => undoVote({ comment: id })
+                          ? (id: string) =>
+                              undoVote({ comment: id }, updateCommentPoints)
                           : (id: string) =>
-                              vote({ comment: id, isUpvote: false }),
+                              vote(
+                                { comment: id, isUpvote: false },
+                                updateCommentPoints
+                              ),
                     };
                     return (
                       <CommentContainer
@@ -99,8 +127,7 @@ const UserView: React.FC = () => {
                         comment={c}
                         onEditFinish={updateComment}
                         onClickDelete={deleteComment}
-                        ownedByUser={user && c.user._id === user._id}
-                        indent={0}
+                        ownedByUser={user && c.user === user._id}
                         {...voteProps}
                       />
                     );
