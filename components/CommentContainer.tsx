@@ -15,7 +15,7 @@ interface CommentContainerProps {
   onClickDelete: (comment_id: string) => Promise<void>;
   onClickUpVote: (comment_id: string) => void;
   onClickDownVote: (comment_id: string) => void;
-  comment: Comment;
+  comment: any;
 }
 const CommentContainer: React.FC<CommentContainerProps> = ({
   ownedByUser = false,
@@ -70,7 +70,7 @@ const CommentContainer: React.FC<CommentContainerProps> = ({
             }
           `}
         >
-          <UserLink user={comment.user} />
+          <UserLink user={comment.user as User} />
           <DateTime
             ISOString={comment.createdAt}
             css={css`

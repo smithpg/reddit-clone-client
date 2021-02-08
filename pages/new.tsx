@@ -1,8 +1,10 @@
+import React from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Form, Input, Button } from 'antd';
 import useSWR, { mutate } from 'swr';
 
+import { Post } from '../types/entities';
 import { request } from '../utils';
 import { useGlobal } from '../store';
 import Layout from '../components/Layout';
@@ -18,7 +20,7 @@ const NewPostView = () => {
   const onFinish = async (values: any) => {
     console.log(values);
 
-    const newPost = await request('post', { body: values, token: token });
+    const newPost = await request<Post>('post', { body: values, token: token });
 
     mutate('post');
 

@@ -1,7 +1,9 @@
 import React from 'react';
 import { css, Global } from '@emotion/core';
 
-export const theme = {
+export type Theme = Record<string, any>;
+
+export const theme: Theme = {
   colors: {
     brand: '#7492cc',
     accent: '#ebbc3d',

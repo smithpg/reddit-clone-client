@@ -150,6 +150,7 @@ export const GlobalProvider: React.FC = (props) => {
     // Normalize post object by replacing comments with comment ID's
     const normalizedPost: NormalizedPost = {
       ...post,
+      user: post.user as string,
       comments: Object.keys(indexedComments),
     };
 
@@ -198,7 +199,7 @@ export const GlobalProvider: React.FC = (props) => {
     try {
       return request(`comment/${comment_id}`, { method: 'delete' });
     } catch (error) {
-      console.log(err);
+      console.log(error);
     }
   }
 

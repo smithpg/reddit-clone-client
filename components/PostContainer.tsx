@@ -1,7 +1,7 @@
 import { css } from '@emotion/core';
 import { useRouter } from 'next/router';
 
-import { Post } from '../types/entities';
+import { Post, User } from '../types/entities';
 import VoteButtons from './VoteButtons';
 import UserLink from './UserLink';
 import Layout from './Layout';
@@ -69,7 +69,7 @@ const PostContainer: React.FC<PostProps> = ({
                 margin-right: 1rem;
               `}
             >
-              <UserLink user={post.user} />
+              <UserLink user={post.user as User} />
             </span>
             <span>{post.commentCount} comments</span>
           </div>

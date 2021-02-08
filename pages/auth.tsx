@@ -36,7 +36,8 @@ const AuthView = () => {
 
     console.log(`Redirecting to ${router.query.redirect}`);
 
-    router.push(router.query.redirect || '/');
+    const redirectURL: string = (router.query.redirect as string) || '/';
+    router.push(redirectURL);
   };
 
   return (

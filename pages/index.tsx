@@ -1,10 +1,11 @@
+import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { css } from '@emotion/core';
 import useSWR from 'swr';
 
-import { User, Post, Comment } from '../../types/entities';
+import { User, Post, Comment } from '../types/entities';
 import { useGlobal } from '../store';
 import Navbar from '../components/Navbar';
 import VoteButtons from '../components/VoteButtons';

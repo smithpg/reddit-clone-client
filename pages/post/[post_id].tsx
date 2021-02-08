@@ -6,9 +6,8 @@ import { useTheme } from '@emotion/react';
 import { Form, Input, Button, Typography } from 'antd';
 import useSWR, { mutate } from 'swr';
 
-import { User, Post, Comment } from '../../types/entities';
 import { useWindowSize } from '../../hooks';
-import { useGlobal, usePost } from '../../store';
+import { useGlobal } from '../../store';
 import Layout from '../../components/Layout';
 import Navbar from '../../components/Navbar';
 import DateTime from '../../components/DateTime';
@@ -21,7 +20,7 @@ import { request } from '../../utils';
 
 const PostView: React.FC = () => {
   const router = useRouter();
-  const post_id: string = router.query.post_id;
+  const post_id: string = router.query.post_id as string;
   const {
     user,
     votes,
@@ -33,10 +32,10 @@ const PostView: React.FC = () => {
     updateComment,
     deleteComment,
   } = useGlobal();
-  const { navbarHeight } = useTheme();
+  const { navbarHeight } = useTheme() as Record<string, any>;
   const { width: screenWidth } = useWindowSize();
   const [post, setPost] = React.useState(null);
-  const [comments, setComments] = React.useState({});
+  const [comments, setComments] = React.useState([]);
   const [activeComments, setActiveComments] = React.useState({});
 
   React.useEffect(() => {
@@ -136,7 +135,6 @@ const PostView: React.FC = () => {
                 key={c._id}
                 comment={c}
                 triggerReply={triggerComment}
-                isReplying={getIsReplying(c._id)}
                 onEditFinish={onUpdateComment}
                 onClickDelete={onDeleteComment}
                 ownedByUser={user && c.user._id === user._id}
@@ -150,11 +148,9 @@ const PostView: React.FC = () => {
               key={c._id}
               comment={c}
               triggerReply={triggerComment}
-              isReplying={getIsReplying(c._id)}
               onEditFinish={onUpdateComment}
               onClickDelete={onDeleteComment}
               ownedByUser={user && c.user._id === user._id}
-              indent={indent}
               {...voteProps}
             />
           );
