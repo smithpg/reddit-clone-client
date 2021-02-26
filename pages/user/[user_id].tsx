@@ -28,6 +28,9 @@ const UserView: React.FC = () => {
   } = useGlobal();
 
   React.useEffect(() => {
+    if (user_id === undefined) {
+      return;
+    }
     loadUserDetails(user_id).then(({ user, posts, comments }) => {
       setTargetUser(user);
       setPosts(posts);

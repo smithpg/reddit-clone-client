@@ -16,7 +16,6 @@ import VoteButtons from '../../components/VoteButtons';
 import UserLink from '../../components/UserLink';
 import CommentForm from '../../components/CommentForm';
 import IndentBox from '../../components/IndentBox';
-import { request } from '../../utils';
 
 const PostView: React.FC = () => {
   const router = useRouter();
@@ -50,10 +49,11 @@ const PostView: React.FC = () => {
   const commentTree = React.useMemo(() => {
     // if the post and its comments have been
     // loaded
-    if (post && comments && comments[post.comments[0]]) {
+    console.log('rebuilding commentTree');
+    if (post && comments) {
       const populated = populateComments(comments);
 
-      return post.comments
+      return Object.keys(comments)
         .map((id) => populated[id])
         .filter((c) => c && !c.parent);
     } else return [];
@@ -84,7 +84,12 @@ const PostView: React.FC = () => {
       parent: parent_id,
       post: post_id,
     });
-    setComments((c) => ({ ...c, [newComment._id]: newComment }));
+
+    const newComments = { ...comments, [newComment._id]: newComment };
+    console.log(`newComments = `);
+    console.log(newComments);
+
+    setComments(newComments);
     setActiveComments((r) => ({ ...r, [parent_id || 'ROOT']: false }));
   };
 
