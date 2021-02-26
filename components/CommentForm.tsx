@@ -5,7 +5,7 @@ import { Form, Input, Button } from 'antd';
 interface CommentFormProps {
   parent_id?: string;
   showCancelButton?: boolean;
-  submitComment: (text: string, parent_id?: string) => void;
+  submitComment: (text: string, parent_id?: string) => Promise<void>;
   cancelComment: (parent_id?: string) => void;
   indent?: number;
 }
@@ -17,9 +17,20 @@ const CommentForm: React.FC<CommentFormProps> = ({
   indent = 0,
   ...props
 }) => {
+  const [form] = Form.useForm();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const onFinish = (values) => {
+    setIsSubmitting(true);
+    submitComment(values.text, parent_id).then(() => {
+      setIsSubmitting(false);
+      form.setFieldsValue({ text: '' });
+    });
+  };
+
   return (
     <Form
-      onFinish={(values) => submitComment(values.text, parent_id)}
+      form={form}
+      onFinish={onFinish}
       {...props}
       css={css`
         margin-left: ${indent}rem;
@@ -28,7 +39,9 @@ const CommentForm: React.FC<CommentFormProps> = ({
       <Form.Item name="text">
         <Input.TextArea />
       </Form.Item>
-      <Button htmlType="submit">Submit</Button>
+      <Button loading={isSubmitting} htmlType="submit">
+        Submit
+      </Button>
       {showCancelButton && (
         <Button onClick={() => cancelComment(parent_id)}>Cancel</Button>
       )}
