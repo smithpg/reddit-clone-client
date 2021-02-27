@@ -42,109 +42,86 @@ const UserView: React.FC = () => {
   const [posts, setPosts] = React.useState({});
   const [comments, setComments] = React.useState({});
 
-  return (
-    <Layout>
-      <Layout.Navbar
-        logo={
-          <Link href="/">
-            <h1>Legenda</h1>
-          </Link>
-        }
-      />
-      <Layout.Content>
-        {targetUser ? (
-          <>
-            <Layout.Block>
-              <h2>{targetUser.username}</h2>
-            </Layout.Block>
-            <Layout.Block>
-              <Tabs defaultActiveKey="1">
-                <TabPane tab="Posts" key="1">
-                  {posts &&
-                    Object.values(posts).map((p: Post) => {
-                      const updatePostPoints = (newPoints) => {
-                        setPosts({
-                          ...posts,
-                          [p._id]: { ...p, points: newPoints },
-                        });
-                      };
+  return targetUser ? (
+    <>
+      <Layout.Block>
+        <h2>{targetUser.username}</h2>
+      </Layout.Block>
+      <Layout.Block>
+        <Tabs defaultActiveKey="1">
+          <TabPane tab="Posts" key="1">
+            {posts &&
+              Object.values(posts).map((p: Post) => {
+                const updatePostPoints = (newPoints) => {
+                  setPosts({
+                    ...posts,
+                    [p._id]: { ...p, points: newPoints },
+                  });
+                };
 
-                      const voteProps = {
-                        userVote: votes.posts[p._id] || 0,
-                        onClickUpVote:
-                          votes.posts[p._id] === 1
-                            ? (id: string) =>
-                                undoVote({ post: id }, updatePostPoints)
-                            : (id: string) =>
-                                vote(
-                                  { post: id, isUpvote: true },
-                                  updatePostPoints
-                                ),
-                        onClickDownVote:
-                          votes.posts[p._id] === -1
-                            ? (id: string) =>
-                                undoVote({ post: id }, updatePostPoints)
-                            : (id: string) =>
-                                vote(
-                                  { post: id, isUpvote: false },
-                                  updatePostPoints
-                                ),
-                      };
+                const voteProps = {
+                  userVote: votes.posts[p._id] || 0,
+                  onClickUpVote:
+                    votes.posts[p._id] === 1
+                      ? (id: string) => undoVote({ post: id }, updatePostPoints)
+                      : (id: string) =>
+                          vote({ post: id, isUpvote: true }, updatePostPoints),
+                  onClickDownVote:
+                    votes.posts[p._id] === -1
+                      ? (id: string) => undoVote({ post: id }, updatePostPoints)
+                      : (id: string) =>
+                          vote({ post: id, isUpvote: false }, updatePostPoints),
+                };
 
-                      return (
-                        <PostContainer post={p} key={p._id} {...voteProps} />
-                      );
-                    })}
-                </TabPane>
-                <TabPane tab="Comments" key="2">
-                  {Object.values(comments).map((c: Comment) => {
-                    const updateCommentPoints = (newPoints) => {
-                      setComments({
-                        ...comments,
-                        [c._id]: { ...c, points: newPoints },
-                      });
-                    };
-                    const voteProps = {
-                      userVote: votes.comments[c._id] || 0,
-                      onClickUpVote:
-                        votes.comments[c._id] === 1
-                          ? (id: string) =>
-                              undoVote({ comment: id }, updateCommentPoints)
-                          : (id: string) =>
-                              vote(
-                                { comment: id, isUpvote: true },
-                                updateCommentPoints
-                              ),
-                      onClickDownVote:
-                        votes.comments[c._id] === -1
-                          ? (id: string) =>
-                              undoVote({ comment: id }, updateCommentPoints)
-                          : (id: string) =>
-                              vote(
-                                { comment: id, isUpvote: false },
-                                updateCommentPoints
-                              ),
-                    };
-                    return (
-                      <CommentContainer
-                        key={c._id}
-                        comment={c}
-                        onEditFinish={updateComment}
-                        onClickDelete={deleteComment}
-                        ownedByUser={user && c.user === user._id}
-                        {...voteProps}
-                      />
-                    );
-                  })}
-                </TabPane>
-              </Tabs>
-            </Layout.Block>
-          </>
-        ) : (
-          <Layout.Block>Loading...</Layout.Block>
-        )}
-      </Layout.Content>
-    </Layout>
+                return <PostContainer post={p} key={p._id} {...voteProps} />;
+              })}
+          </TabPane>
+          <TabPane tab="Comments" key="2">
+            {Object.values(comments).map((c: Comment) => {
+              const updateCommentPoints = (newPoints) => {
+                setComments({
+                  ...comments,
+                  [c._id]: { ...c, points: newPoints },
+                });
+              };
+              const voteProps = {
+                userVote: votes.comments[c._id] || 0,
+                onClickUpVote:
+                  votes.comments[c._id] === 1
+                    ? (id: string) =>
+                        undoVote({ comment: id }, updateCommentPoints)
+                    : (id: string) =>
+                        vote(
+                          { comment: id, isUpvote: true },
+                          updateCommentPoints
+                        ),
+                onClickDownVote:
+                  votes.comments[c._id] === -1
+                    ? (id: string) =>
+                        undoVote({ comment: id }, updateCommentPoints)
+                    : (id: string) =>
+                        vote(
+                          { comment: id, isUpvote: false },
+                          updateCommentPoints
+                        ),
+              };
+              return (
+                <CommentContainer
+                  key={c._id}
+                  comment={c}
+                  onEditFinish={updateComment}
+                  onClickDelete={deleteComment}
+                  ownedByUser={user && c.user === user._id}
+                  {...voteProps}
+                />
+              );
+            })}
+          </TabPane>
+        </Tabs>
+      </Layout.Block>
+    </>
+  ) : (
+    <Layout.Block>Loading...</Layout.Block>
   );
 };
 

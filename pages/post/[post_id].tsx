@@ -224,134 +224,117 @@ const PostView: React.FC = () => {
     }
   };
 
-  return (
-    <Layout>
-      <Navbar />
-      <Layout.Content>
-        {post ? (
-          <>
-            <Layout.Block
-              css={css`
-                position: sticky;
-                z-index: 2;
-                top: ${navbarHeight}px;
-                background: white;
-                display: flex;
-                align-items: center;
-              `}
-            >
-              <VoteButtons
-                onClickUpVote={
-                  votes.posts[post_id] === 1
-                    ? () => undoVote({ post: post_id }, updatePostPoints)
-                    : () =>
-                        vote(
-                          { post: post_id, isUpvote: true },
-                          updatePostPoints
-                        )
-                }
-                onClickDownVote={
-                  votes.posts[post_id] === -1
-                    ? () => undoVote({ post: post_id }, updatePostPoints)
-                    : () =>
-                        vote(
-                          { post: post_id, isUpvote: false },
-                          updatePostPoints
-                        )
-                }
-                userVote={votes.posts[post._id]}
-                value={post.points}
-              />
-              <div
-                css={css`
-                  margin-left: 12px;
-                `}
-              >
-                <Typography.Title
-                  level={screenWidth > 500 ? 2 : 4}
-                  css={css`
-                    margin: 0px !important;
-                    flex-grow: 1;
-                  `}
-                >
-                  {post.title}{' '}
-                </Typography.Title>
-                <UserLink user={post.user} />
-              </div>
-            </Layout.Block>
-            <Layout.Block>
-              {isEditingPost ? (
-                <Form
-                  form={editPostForm}
-                  onFinish={async ({ text }) => {
-                    await updatePost(text);
-                    setIsEditingPost(false);
-                  }}
-                >
-                  <Form.Item name="text">
-                    <Input.TextArea />
-                  </Form.Item>
-                </Form>
-              ) : (
-                post.text
-              )}
-            </Layout.Block>
-            {userOwnsPost ? (
-              <Layout.Block
-                css={css`
-                  display: flex;
-                `}
-              >
-                <Button onClick={deletePost}>Delete</Button>
-                <Button
-                  onClick={
-                    isEditingPost
-                      ? () => {
-                          editPostForm.submit();
-                        }
-                      : () => {
-                          setIsEditingPost(true);
-                        }
+  return post ? (
+    <>
+      <Layout.Block
+        css={css`
+          position: sticky;
+          z-index: 2;
+          top: ${navbarHeight}px;
+          background: white;
+          display: flex;
+          align-items: center;
+        `}
+      >
+        <VoteButtons
+          onClickUpVote={
+            votes.posts[post_id] === 1
+              ? () => undoVote({ post: post_id }, updatePostPoints)
+              : () => vote({ post: post_id, isUpvote: true }, updatePostPoints)
+          }
+          onClickDownVote={
+            votes.posts[post_id] === -1
+              ? () => undoVote({ post: post_id }, updatePostPoints)
+              : () => vote({ post: post_id, isUpvote: false }, updatePostPoints)
+          }
+          userVote={votes.posts[post._id]}
+          value={post.points}
+        />
+        <div
+          css={css`
+            margin-left: 12px;
+          `}
+        >
+          <Typography.Title
+            level={screenWidth > 500 ? 2 : 4}
+            css={css`
+              margin: 0px !important;
+              flex-grow: 1;
+            `}
+          >
+            {post.title}{' '}
+          </Typography.Title>
+          <UserLink user={post.user} />
+        </div>
+      </Layout.Block>
+      <Layout.Block>
+        {isEditingPost ? (
+          <Form
+            form={editPostForm}
+            onFinish={async ({ text }) => {
+              await updatePost(text);
+              setIsEditingPost(false);
+            }}
+          >
+            <Form.Item name="text">
+              <Input.TextArea />
+            </Form.Item>
+          </Form>
+        ) : (
+          post.text
+        )}
+      </Layout.Block>
+      {userOwnsPost ? (
+        <Layout.Block
+          css={css`
+            display: flex;
+          `}
+        >
+          <Button onClick={deletePost}>Delete</Button>
+          <Button
+            onClick={
+              isEditingPost
+                ? () => {
+                    editPostForm.submit();
                   }
-                >
-                  {isEditingPost ? 'Submit' : 'Edit'}
-                </Button>
-                {isEditingPost ? (
-                  <Button onClick={() => setIsEditingPost(false)}>
-                    Cancel
-                  </Button>
-                ) : null}
-              </Layout.Block>
-            ) : null}
-            <Layout.Block>
-              <hr></hr>
-            </Layout.Block>
-            <Layout.Block
-              css={css`
-                margin-top: 12px;
-                margin-bottom: 12px;
-              `}
-            >
-              {user ? (
-                <>
-                  <h3>Leave a Comment as {user.username}</h3>
-                  <CommentForm
-                    submitComment={submitComment}
-                    cancelComment={cancelComment}
-                    showCancelButton={false}
-                  />
-                </>
-              ) : (
-                <Button onClick={triggerAuth}>Login to Comment</Button>
-              )}
-            </Layout.Block>
-            <Layout.Block>{renderCommentTree()}</Layout.Block>
+                : () => {
+                    setIsEditingPost(true);
+                  }
+            }
+          >
+            {isEditingPost ? 'Submit' : 'Edit'}
+          </Button>
+          {isEditingPost ? (
+            <Button onClick={() => setIsEditingPost(false)}>Cancel</Button>
+          ) : null}
+        </Layout.Block>
+      ) : null}
+      <Layout.Block>
+        <hr></hr>
+      </Layout.Block>
+      <Layout.Block
+        css={css`
+          margin-top: 12px;
+          margin-bottom: 12px;
+        `}
+      >
+        {user ? (
+          <>
+            <h3>Leave a Comment as {user.username}</h3>
+            <CommentForm
+              submitComment={submitComment}
+              cancelComment={cancelComment}
+              showCancelButton={false}
+            />
           </>
         ) : (
-          <Layout.Block>Loading...</Layout.Block>
+          <Button onClick={triggerAuth}>Login to Comment</Button>
         )}
-      </Layout.Content>
-    </Layout>
+      </Layout.Block>
+      <Layout.Block>{renderCommentTree()}</Layout.Block>
+    </>
+  ) : (
+    <Layout.Block>Loading...</Layout.Block>
   );
 };
 

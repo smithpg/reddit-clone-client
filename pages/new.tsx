@@ -34,40 +34,31 @@ const NewPostView = () => {
   }, []);
 
   return (
-    <Layout>
-      <Layout.Navbar
-        logo={
-          <Link href="/">
-            <h1>Legenda</h1>
-          </Link>
-        }
-      />
-      <Layout.Content>
-        <Layout.Block>
-          <h1> Create a Post</h1>
-          <p>Fill out the fields below and press submit to create a new post</p>
-        </Layout.Block>
-        <Layout.Block>
-          <Form
-            layout="vertical"
-            onFinish={onFinish}
-            validateMessages={validateMessages}
-          >
-            <Form.Item name="title" label="Title">
-              <Input />
-            </Form.Item>
-            <Form.Item name="text" label="Post Text">
-              <Input.TextArea />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit">
-                Submit
-              </Button>
-            </Form.Item>
-          </Form>
-        </Layout.Block>
-      </Layout.Content>
-    </Layout>
+    <>
+      <Layout.Block>
+        <h1> Create a Post</h1>
+        <p>Fill out the fields below and press submit to create a new post</p>
+      </Layout.Block>
+      <Layout.Block>
+        <Form
+          layout="vertical"
+          onFinish={onFinish}
+          validateMessages={validateMessages}
+        >
+          <Form.Item name="title" label="Title">
+            <Input />
+          </Form.Item>
+          <Form.Item name="text" label="Post Text">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Layout.Block>
+    </>
   );
 };
 

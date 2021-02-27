@@ -6,6 +6,8 @@ import { ThemeProvider } from '@emotion/react';
 import { cache } from 'emotion';
 
 import { GlobalProvider } from '../store';
+import Layout from '../components/Layout';
+import Navbar from '../components/Navbar';
 import { request } from '../utils';
 import { globalStyles, theme } from '../styles/index';
 
@@ -21,7 +23,12 @@ const App: React.FC<AppProps> = ({ Component, pageProps }) => {
         <ThemeProvider theme={theme}>
           <CacheProvider value={cache}>
             {globalStyles}
-            <Component {...pageProps} />
+            <Layout>
+              <Navbar />
+              <Layout.Content>
+                <Component {...pageProps} />
+              </Layout.Content>
+            </Layout>
           </CacheProvider>
         </ThemeProvider>
       </GlobalProvider>
