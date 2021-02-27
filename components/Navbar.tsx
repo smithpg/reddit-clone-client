@@ -61,7 +61,11 @@ const Navbar: React.FC = (props) => {
   const { width } = useWindowSize();
 
   const showHorizontalNav = width > 500;
-  const logo = <h1 onClick={() => router.push('/')}>Legenda</h1>;
+  const logo = (
+    <h1 onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+      Legenda
+    </h1>
+  );
 
   return (
     <Layout.Navbar logo={logo}>
