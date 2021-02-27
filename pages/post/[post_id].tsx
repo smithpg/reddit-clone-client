@@ -8,6 +8,7 @@ import useSWR, { mutate } from 'swr';
 
 import { useWindowSize } from '../../hooks';
 import { useGlobal } from '../../store';
+import request from '../../utils/API';
 import Layout from '../../components/Layout';
 import Navbar from '../../components/Navbar';
 import DateTime from '../../components/DateTime';
@@ -34,8 +35,12 @@ const PostView: React.FC = () => {
   const { navbarHeight } = useTheme() as Record<string, any>;
   const { width: screenWidth } = useWindowSize();
   const [post, setPost] = React.useState(null);
+  const [isEditingPost, setIsEditingPost] = React.useState(false);
+  const [editPostForm] = Form.useForm();
   const [comments, setComments] = React.useState([]);
   const [activeComments, setActiveComments] = React.useState({});
+
+  const userOwnsPost = user?._id === post?.user._id;
 
   React.useEffect(() => {
     if (post_id) {
@@ -45,6 +50,12 @@ const PostView: React.FC = () => {
       });
     }
   }, [post_id]);
+
+  React.useEffect(() => {
+    if (isEditingPost) {
+      editPostForm.setFieldsValue({ text: post.text });
+    }
+  }, [isEditingPost]);
 
   const commentTree = React.useMemo(() => {
     // if the post and its comments have been
@@ -105,6 +116,21 @@ const PostView: React.FC = () => {
     return updateComment(id, newText).then((newComment) => {
       setComments({ ...comments, [id]: newComment });
     });
+  };
+
+  const deletePost = async () => {
+    await request(`post/${post_id}`, { method: 'DELETE' });
+
+    setPost((p) => ({ ...p, text: '[DELETED]' }));
+  };
+
+  const updatePost = async (text) => {
+    await request(`post/${post_id}`, {
+      method: 'PUT',
+      body: { text },
+    });
+
+    setPost((p) => ({ ...p, text: text }));
   };
 
   const updatePostPoints = (newPoints) => {
@@ -253,7 +279,53 @@ const PostView: React.FC = () => {
                 <UserLink user={post.user} />
               </div>
             </Layout.Block>
-            <Layout.Block>{post.text}</Layout.Block>
+            <Layout.Block>
+              {isEditingPost ? (
+                <Form
+                  form={editPostForm}
+                  onFinish={async ({ text }) => {
+                    await updatePost(text);
+                    setIsEditingPost(false);
+                  }}
+                >
+                  <Form.Item name="text">
+                    <Input.TextArea />
+                  </Form.Item>
+                </Form>
+              ) : (
+                post.text
+              )}
+            </Layout.Block>
+            {userOwnsPost ? (
+              <Layout.Block
+                css={css`
+                  display: flex;
+                `}
+              >
+                <Button onClick={deletePost}>Delete</Button>
+                <Button
+                  onClick={
+                    isEditingPost
+                      ? () => {
+                          editPostForm.submit();
+                        }
+                      : () => {
+                          setIsEditingPost(true);
+                        }
+                  }
+                >
+                  {isEditingPost ? 'Submit' : 'Edit'}
+                </Button>
+                {isEditingPost ? (
+                  <Button onClick={() => setIsEditingPost(false)}>
+                    Cancel
+                  </Button>
+                ) : null}
+              </Layout.Block>
+            ) : null}
+            <Layout.Block>
+              <hr></hr>
+            </Layout.Block>
             <Layout.Block
               css={css`
                 margin-top: 12px;
