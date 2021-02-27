@@ -22,7 +22,7 @@ const PostContainer: React.FC<PostProps> = ({
   const router = useRouter();
 
   return (
-    <Layout.Block
+    <div
       css={css`
         margin-bottom: 1rem;
         border: 1px solid #eee;
@@ -75,7 +75,7 @@ const PostContainer: React.FC<PostProps> = ({
           </div>
         </div>
       </div>
-    </Layout.Block>
+    </div>
   );
 };
 
